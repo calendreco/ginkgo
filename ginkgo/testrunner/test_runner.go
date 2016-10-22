@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -48,6 +49,7 @@ func New(suite testsuite.TestSuite, numCPU int, parallelStream bool, goOpts map[
 			panic(fmt.Sprintf("couldn't create temporary directory... might be time to rm -rf:\n%s", err.Error()))
 		}
 		runner.compilationTargetPath = filepath.Join(dir, suite.PackageName+".test")
+		log.Printf("compilationtargetpath %s", runner.compilationTargetPath)
 	}
 
 	return runner
@@ -59,6 +61,7 @@ func (t *TestRunner) Compile() error {
 
 func (t *TestRunner) BuildArgs(path string) []string {
 	args := []string{"test", "-c", "-o", path, t.Suite.Path}
+	log.Printf("args %+v", args)
 
 	if *t.goOpts["covermode"].(*string) != "" {
 		args = append(args, "-cover", fmt.Sprintf("-covermode=%s", *t.goOpts["covermode"].(*string)))
@@ -131,6 +134,7 @@ func (t *TestRunner) CompileTo(path string) error {
 	}
 
 	args := t.BuildArgs(path)
+	log.Printf("compileto %v", args)
 	cmd := exec.Command("go", args...)
 
 	output, err := cmd.CombinedOutput()
@@ -248,6 +252,7 @@ func fixCompilationOutput(output string, relToPath string) string {
 }
 
 func (t *TestRunner) Run() RunResult {
+	log.Printf("runner %v %v", t.Suite.IsGinkgo, t.numCPU)
 	if t.Suite.IsGinkgo {
 		if t.numCPU > 1 {
 			if t.parallelStream {
